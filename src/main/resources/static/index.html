@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Sealed Secret</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: inline-block;
+      width: 120px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    select {
+      width: 200px;
+      padding: 5px;
+    }
+
+    .yaml-textarea {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+    }
+
+    input[type="submit"] {
+      margin-left: 120px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    h2 {
+      margin-top: 40px;
+    }
+
+    #highlighted-code,
+    #response-textarea {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+<h1>Create Sealed Secrets</h1>
+
+<form id="yaml-form">
+  <label for="name">Name:</label>
+  <input type="text" id="name" name="name"><br><br>
+
+  <label for="namespace">Namespace:</label>
+  <input type="text" id="namespace" name="namespace"><br><br>
+
+  <label for="environment">Environment:</label>
+  <select id="environment" name="environment">
+    <option value="DEV">DEV</option>
+    <option value="SIT">SIT</option>
+    <option value="UAT">UAT</option>
+    <option value="PROD">PROD</option>
+  </select><br><br>
+
+  <label for="yaml-textarea">Enter YAML Text:</label><br>
+  <textarea id="yaml-textarea" class="yaml-textarea" rows="5" cols="40"></textarea><br><br>
+  <input type="submit" value="Create Sealed Secret" name="submitSecret">
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-yaml.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var form = document.getElementById("yaml-form");
+    var highlightedResponse = document.getElementById("highlighted-response");
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent form submission
+      createSealedSecret();
+    });
+
+    function createSealedSecret() {
+      var yamlText = document.getElementById("yaml-textarea").value;
+      var name = document.getElementById("name").value;
+      var namespace = document.getElementById("namespace").value;
+      var environment = document.getElementById("environment").value;
+
+      var yamlData = yamlText.replace(/: (.*$)/gm, function(match, value) {
+        return ": " + btoa(value);
+      });
+
+      var indentedYamlData = yamlData.replace(/^/gm, "  ");
+
+      var secretTemplate = "apiVersion: v1\n" +
+              "kind: Secret\n" +
+              "metadata:\n" +
+              "  name: " + name + "\n" +
+              "  namespace: " + namespace + "\n" +
+              "data:\n" +
+              indentedYamlData;
+
+      var highlightedCode = Prism.highlight(secretTemplate, Prism.languages.yaml, "yaml");
+      document.getElementById("highlighted-code").innerHTML = highlightedCode;
+
+      // Call Spring Boot REST API to create sealed secret
+      var apiUrl = "http://localhost:8080/createSealedSecret";
+      var requestBody = {
+        name: name,
+        namespace: namespace,
+        environment: environment,
+        yamlData: secretTemplate
+      };
+
+      fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestBody)
+      })
+              .then(response => response.json())
+              .then(data => {
+                var highlightedData = Prism.highlight(data.data, Prism.languages.yaml, "yaml");
+                highlightedResponse.innerHTML = highlightedData;
+              })
+              .catch(error => {
+                highlightedResponse.value = "Error: " + error;
+              });
+    }
+  });
+</script>
+
+<h2>K8s Secret data send:</h2>
+<pre><code id="highlighted-code" class="language-yaml"></code></pre>
+
+<h2>SealedSecret received:</h2>
+<pre><code id="highlighted-response" class="language-yaml"></code></pre>
+</body>
+</html>
