@@ -1,33 +1,19 @@
 package com.example;
 
+// This class is used as the request body for the POST /sealedSecret endpoint.
 public class CreateSealedSecretRequest {
-    private String name;
-    private String namespace;
+
+    // This field is used to hold the YAML data for the SealedSecret resource
+    // that will be created.
     private String yamlData;
 
     public CreateSealedSecretRequest() {
+        // No-argument constructor required by Jackson deserialization
+    }
     }
 
-    public CreateSealedSecretRequest(String name, String namespace, String yamlData) {
-        this.name = name;
-        this.namespace = namespace;
+    public CreateSealedSecretRequest(String yamlData) {
         this.yamlData = yamlData;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
     }
 
     public String getYamlData() {
@@ -37,4 +23,5 @@ public class CreateSealedSecretRequest {
     public void setYamlData(String yamlData) {
         this.yamlData = yamlData;
     }
+
 }

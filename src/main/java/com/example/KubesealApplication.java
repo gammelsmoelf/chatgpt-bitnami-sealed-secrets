@@ -11,6 +11,4 @@ public class KubesealApplication {
     public static void main(String[] args) {
         SpringApplication.run(KubesealApplication.class, args);
     }
-
-
 }
